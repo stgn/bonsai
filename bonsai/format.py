@@ -42,6 +42,7 @@ def encode(spec, ast, fp):
 
     logger.info(f'String table: {string_table_packed_len: 8,} bytes')
     logger.info(f' Syntax tree: {graph_data_len: 8,} bytes')
+    logger.info(f'  Total size: {fp.tell(): 8,} bytes')
 
 
 def decode(spec, fp):

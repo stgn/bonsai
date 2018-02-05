@@ -15,8 +15,8 @@ Here's some filesizes (in bytes, of course):
 
 Filename | Original | bonsai | Brotli | gzip
 ---------|----------|--------|--------|-----
-react-dom v16.2.0 (minified) | 94,498 | 26,168 | 26,702 | 30,533
-Vue.js v2.5.13 (minified) | 86,510 | 29,011 | 28,129 | 31,259
+react-dom v16.2.0 (minified) | 94,498 | 26,085 | 26,702 | 30,533
+Vue.js v2.5.13 (minified) | 86,510 | 28,939 | 28,129 | 31,259
 
 bonsai competes with Brotli and gzip in terms of size, but it is much faster to parse *in theory*. However, since the only implementation (this one) is written in Python, it is not, and it won't get much faster unless I implement it in something else.
 

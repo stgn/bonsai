@@ -23,10 +23,9 @@ class GraphEncoder:
         self.nodes = []
         self.string_table = []
         self.used_types = [spec_types.Null]
-        self.recent_nodes = blist()
+        self.recent_nodes = defaultdict(blist)
         self.contexts = {}
         self.ctx_stack = deque()
-        self.index_cache = set()
 
     def _encode_Enum(self, meta, value):
         index = meta.variants.index(value)
@@ -63,25 +62,20 @@ class GraphEncoder:
     def _encode_NodeRef(self, _, node_index):
         ctx = self.ctx_stack[-1]
         valid_types = ctx.symbols if isinstance(ctx, CanonicalCode) else [ctx]
+        recent_ctx = self.recent_nodes[ctx]
 
-        if node_index in self.index_cache:
-            # TODO: optimize this, or figure out a better way to accomplish the same idea
-            # this takes up a MASSIVE amount (75%+) of the already slow encoding and decoding time
-            # space savings aren't that great (smaller string table, but larger graph bitstream)
+        try:
+            rank = recent_ctx.index(node_index)
+        except ValueError:
+            rank = None
 
-            rank = self.recent_nodes.index(node_index)
-
-            # filter out nodes that would be invalid
-            valid_recent_nodes = (x for x in self.recent_nodes
-                                  if getattr(self.spec, self.nodes[x]['type']) in valid_types)
-            valid_rank = next(i for i, x in enumerate(valid_recent_nodes) if x == node_index)
-
+        if rank is not None:
             # code rank using exp-Golomb
             self.writer.write_bool(True)
-            self.writer.write_ue(valid_rank, 4)
+            self.writer.write_ue(rank, 2)
 
             # we'll move the index to the front of the list
-            del self.recent_nodes[rank]
+            del recent_ctx[rank]
         else:
             self.writer.write_bool(False)
 
@@ -98,8 +92,7 @@ class GraphEncoder:
             self._encode_node_inner(actual_type, actual_node)
 
         if isinstance(node_index, int):
-            self.index_cache.add(node_index)
-            self.recent_nodes.insert(0, node_index)
+            recent_ctx.insert(0, node_index)
 
     def _encode_field(self, node_type, value):
         encode_fn = getattr(self, f'_encode_{node_type.__class__.__name__}')

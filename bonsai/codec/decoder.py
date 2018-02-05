@@ -1,7 +1,7 @@
 import bonsai.specs as spec_types
 from itertools import islice
 from blist import blist
-from collections import deque
+from collections import defaultdict, deque
 from decimal import Decimal, DecimalTuple
 from bonsai.bits import BitsIO
 from bonsai.huffman import CanonicalCode
@@ -22,7 +22,7 @@ class GraphDecoder:
 
         self.used_types = [spec_types.Null]
         self.nodes = []
-        self.recent_nodes = blist()
+        self.recent_nodes = defaultdict(blist)
         self.contexts = {}
         self.ctx_stack = deque()
 
@@ -63,15 +63,11 @@ class GraphDecoder:
     def _decode_NodeRef(self, _):
         ctx = self.ctx_stack[-1]
         valid_types = ctx.symbols if isinstance(ctx, CanonicalCode) else [ctx]
+        recent_ctx = self.recent_nodes[ctx]
 
         if self.reader.read_bool():
-            valid_recent_nodes = ((i, x) for i, x in enumerate(self.recent_nodes)
-                                  if getattr(self.spec, self.nodes[x]['type']) in valid_types)
-
-            valid_rank = self.reader.read_ue(4)
-            rank, node_index = next(islice(valid_recent_nodes, valid_rank, None))
-
-            del self.recent_nodes[rank]
+            rank = self.reader.read_ue(2)
+            node_index = recent_ctx.pop(rank)
         else:
             if len(valid_types) >= 2:
                 actual_type = ctx.read_symbol(self.reader)
@@ -85,7 +81,7 @@ class GraphDecoder:
                 node_index = None
 
         if isinstance(node_index, int):
-            self.recent_nodes.insert(0, node_index)
+            recent_ctx.insert(0, node_index)
             return self.nodes[node_index] if self.tree else node_index
 
     def _decode_field(self, node_type):

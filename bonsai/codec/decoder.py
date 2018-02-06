@@ -1,5 +1,4 @@
 import bonsai.specs as spec_types
-from itertools import islice
 from blist import blist
 from collections import defaultdict, deque
 from decimal import Decimal, DecimalTuple

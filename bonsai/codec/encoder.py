@@ -13,7 +13,7 @@ vardecimal = CanonicalCode((None, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9), (0, 1, 2, 8))
 
 class GraphEncoder:
     __slots__ = ('spec', 'nodes', 'tree', 'writer', 'string_table', 'used_types',
-                 'recent_nodes', 'contexts', 'ctx_stack', 'index_cache')
+                 'recent_nodes', 'contexts', 'ctx_stack')
 
     def __init__(self, spec, tree, fp):
         self.spec = spec
